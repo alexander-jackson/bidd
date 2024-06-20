@@ -4,6 +4,10 @@ use color_eyre::eyre::{eyre, Result};
 use futures_util::StreamExt;
 
 const HEADPHONE_NAME: &'static str = "WH-1000XM4";
+const DEVICE_IDENTIFIERS: &[&'static str] = &[
+    // "ff3dd8eb-e4b9-b66f-7d04-0e57e7a30766",
+    "22a6763b-71bb-27fb-61f0-ac0fa7fd7ab1",
+];
 
 fn setup() -> Result<()> {
     color_eyre::install()?;
@@ -36,19 +40,37 @@ async fn are_headphones_on(name: &str) -> Result<bool> {
     let mut events = central_adapter.events().await?;
 
     while let Some(event) = events.next().await {
-        if let CentralEvent::DeviceDiscovered(id) = event {
-            let peripheral = central_adapter.peripheral(&id).await?;
+        let id = match &event {
+            CentralEvent::DeviceDiscovered(id)
+            | CentralEvent::DeviceUpdated(id)
+            | CentralEvent::DeviceConnected(id)
+            | CentralEvent::DeviceDisconnected(id)
+            | CentralEvent::ManufacturerDataAdvertisement { id, .. }
+            | CentralEvent::ServiceDataAdvertisement { id, .. }
+            | CentralEvent::ServicesAdvertisement { id, .. } => id,
+        };
 
-            tracing::info!(%id, "Discovered a new device");
+        if DEVICE_IDENTIFIERS.contains(&id.to_string().as_str()) {
+            tracing::info!(?event, "Got an event for a known device");
+        }
 
-            if peripheral
-                .properties()
-                .await?
-                .and_then(|properties| properties.local_name)
-                .is_some_and(|value| value.contains(name))
-            {
-                return Ok(true);
+        match event {
+            CentralEvent::DeviceDiscovered(id) => {
+                let peripheral = central_adapter.peripheral(&id).await?;
+
+                if peripheral
+                    .properties()
+                    .await?
+                    .and_then(|properties| properties.local_name)
+                    .is_some_and(|value| value.contains(name))
+                {
+                    tracing::info!(%id, properties = ?peripheral.properties().await?, "Headphones have been discovered");
+                }
             }
+            CentralEvent::DeviceDisconnected(id) => {
+                tracing::info!(%id, "Device has been disconnected");
+            }
+            _ => (),
         }
     }
 
