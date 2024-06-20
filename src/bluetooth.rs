@@ -1,7 +1,27 @@
 use std::ffi::OsStr;
 use std::process::Command;
 
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{eyre, Report, Result};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum BluetoothStatus {
+    Enabled,
+    Disabled,
+}
+
+impl TryFrom<&str> for BluetoothStatus {
+    type Error = Report;
+
+    fn try_from(value: &str) -> Result<Self> {
+        let status = match value {
+            "0" => BluetoothStatus::Disabled,
+            "1" => BluetoothStatus::Enabled,
+            _ => return Err(eyre!("invalid Bluetooth status '{value}' provided")),
+        };
+
+        Ok(status)
+    }
+}
 
 #[derive(Default)]
 pub struct BluetoothController;
@@ -13,14 +33,22 @@ impl BluetoothController {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let command = Command::new("blueutil").args(args).spawn()?;
-        let output = command.wait_with_output()?;
+        let output = Command::new("blueutil").args(args).output()?;
 
         if !output.status.success() {
             return Err(eyre!("Failed to run `blueutil` command"));
         }
 
         Ok(output.stdout)
+    }
+
+    pub fn get_bluetooth_status(&self) -> Result<BluetoothStatus> {
+        let output = self.run_command(["--power"])?;
+        let output = std::str::from_utf8(&output)?;
+
+        let status = BluetoothStatus::try_from(output.trim())?;
+
+        Ok(status)
     }
 
     pub fn get_connected_devices(&self) -> Result<Vec<String>> {
