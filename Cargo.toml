@@ -1,5 +1,5 @@
 [package]
-name = "bluetooth-daemon"
+name = "bidd"
 version = "0.1.0"
 edition = "2021"
 
