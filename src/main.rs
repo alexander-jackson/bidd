@@ -57,3 +57,6 @@ fn main() -> Result<()> {
         std::thread::sleep(Duration::from_secs(60));
     }
 }
+
+#[cfg(test)]
+mod tests;
