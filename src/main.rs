@@ -17,25 +17,41 @@ fn setup() -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    setup()?;
+#[derive(Default)]
+struct LifecycleHandler<C> {
+    controller: C,
+}
 
-    let controller = BlueutilController::default();
-
-    loop {
-        let status = controller.get_bluetooth_status()?;
+impl<C> LifecycleHandler<C>
+where
+    C: BluetoothController,
+{
+    fn run(&self) -> Result<()> {
+        let status = self.controller.get_bluetooth_status()?;
 
         tracing::info!(?status, "Successfully got the Bluetooth details");
 
         if status != BluetoothStatus::Disabled {
-            let devices = controller.get_connected_devices()?;
+            let devices = self.controller.get_connected_devices()?;
 
             if !devices.iter().any(|device| device.contains(HEADPHONE_NAME)) {
-                controller.disable_bluetooth()?;
+                self.controller.disable_bluetooth()?;
 
                 tracing::info!("Headphones are not on, disabled Bluetooth");
             }
         }
+
+        Ok(())
+    }
+}
+
+fn main() -> Result<()> {
+    setup()?;
+
+    let handler: LifecycleHandler<BlueutilController> = LifecycleHandler::default();
+
+    loop {
+        handler.run()?;
 
         // Wait for a while to check again
         std::thread::sleep(Duration::from_secs(60));
