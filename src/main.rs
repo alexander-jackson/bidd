@@ -3,8 +3,10 @@ use std::time::Duration;
 use color_eyre::eyre::Result;
 
 mod bluetooth;
+mod blueutil;
 
 use crate::bluetooth::{BluetoothController, BluetoothStatus};
+use crate::blueutil::BlueutilController;
 
 const HEADPHONE_NAME: &'static str = "WH-1000XM4";
 
@@ -18,12 +20,12 @@ fn setup() -> Result<()> {
 fn main() -> Result<()> {
     setup()?;
 
-    let controller = BluetoothController::default();
+    let controller = BlueutilController::default();
 
     loop {
         let status = controller.get_bluetooth_status()?;
 
-        tracing::debug!(?status, "Successfully got the Bluetooth details");
+        tracing::info!(?status, "Successfully got the Bluetooth details");
 
         if status != BluetoothStatus::Disabled {
             let devices = controller.get_connected_devices()?;
