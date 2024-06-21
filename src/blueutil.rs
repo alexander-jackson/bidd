@@ -15,7 +15,9 @@ impl BlueutilController {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let output = Command::new("blueutil").args(args).output()?;
+        let output = Command::new("/opt/homebrew/bin/blueutil")
+            .args(args)
+            .output()?;
 
         if !output.status.success() {
             return Err(eyre!("Failed to run `blueutil` command"));

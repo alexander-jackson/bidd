@@ -35,7 +35,7 @@ where
             if devices.is_empty() {
                 self.controller.disable_bluetooth()?;
 
-                tracing::info!("No devices are connected, disabled Bluetoohh");
+                tracing::info!("No devices are connected, disabled Bluetooth");
             }
         }
 
