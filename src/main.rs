@@ -8,8 +8,6 @@ mod blueutil;
 use crate::bluetooth::{BluetoothController, BluetoothStatus};
 use crate::blueutil::BlueutilController;
 
-const HEADPHONE_NAME: &'static str = "WH-1000XM4";
-
 fn setup() -> Result<()> {
     color_eyre::install()?;
     tracing_subscriber::fmt().with_ansi(true).init();
@@ -34,10 +32,10 @@ where
         if status != BluetoothStatus::Disabled {
             let devices = self.controller.get_connected_devices()?;
 
-            if !devices.iter().any(|device| device.contains(HEADPHONE_NAME)) {
+            if devices.is_empty() {
                 self.controller.disable_bluetooth()?;
 
-                tracing::info!("Headphones are not on, disabled Bluetooth");
+                tracing::info!("No devices are connected, disabled Bluetoohh");
             }
         }
 
