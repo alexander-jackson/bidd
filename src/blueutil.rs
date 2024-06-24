@@ -8,6 +8,8 @@ use crate::bluetooth::{BluetoothController, BluetoothStatus};
 #[derive(Default)]
 pub struct BlueutilController;
 
+pub const BINARY_LOCATION: &str = "/opt/homebrew/bin/blueutil";
+
 impl BlueutilController {
     /// Runs the underlying command with the specified arguments.
     fn run_command<I, S>(&self, args: I) -> Result<Vec<u8>>
@@ -15,9 +17,7 @@ impl BlueutilController {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let output = Command::new("/opt/homebrew/bin/blueutil")
-            .args(args)
-            .output()?;
+        let output = Command::new(BINARY_LOCATION).args(args).output()?;
 
         if !output.status.success() {
             return Err(eyre!("Failed to run `blueutil` command"));

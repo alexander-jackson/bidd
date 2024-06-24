@@ -1,7 +1,10 @@
 use std::fs::OpenOptions;
+use std::path::Path;
 use std::time::Duration;
 
+use blueutil::BINARY_LOCATION;
 use color_eyre::eyre::{eyre, Result};
+use color_eyre::Section;
 use tera::{Context, Tera};
 
 mod bluetooth;
@@ -46,6 +49,12 @@ where
 }
 
 fn install_launchd_configuration() -> Result<()> {
+    // Check that `blueutil` actually exists
+    if !Path::new(BINARY_LOCATION).exists() {
+        return Err(eyre!("{BINARY_LOCATION} does not exist")
+            .suggestion("you can run `brew install blueutil` to install it"));
+    }
+
     let template = include_str!("../resources/bidd.plist");
     let mut tera = Tera::default();
 
