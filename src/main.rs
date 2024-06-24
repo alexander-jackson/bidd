@@ -56,9 +56,10 @@ fn install_launchd_configuration() -> Result<()> {
     }
 
     let template = include_str!("../resources/bidd.plist");
-    let mut tera = Tera::default();
+    let template_name = "plist";
 
-    tera.add_raw_template("plist", &template)?;
+    let mut tera = Tera::default();
+    tera.add_raw_template(template_name, &template)?;
 
     let home_dir = dirs::home_dir().ok_or_else(|| eyre!("Failed to get home directory"))?;
     let binary_path = home_dir.join(".cargo").join("bin").join("bidd");
@@ -77,12 +78,12 @@ fn install_launchd_configuration() -> Result<()> {
     let mut context = Context::new();
     context.insert("binary_path", &binary_path);
 
-    tera.render_to("plist", &context, config_file)?;
+    tera.render_to(template_name, &context, config_file)?;
 
     tracing::info!(
         ?binary_path,
         ?config_path,
-        "Installed `launchd` configuration"
+        "Installed `launchd` configuration, you may need to allow Bluetooth access shortly"
     );
 
     Ok(())
